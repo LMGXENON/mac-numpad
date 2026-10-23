@@ -93,10 +93,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func requestPermissionsIfNeeded() {
         guard !permissionsRequested else { return }
         permissionsRequested = true
-        if !CGPreflightPostEventAccess() {
-            log("Accessibility not granted — requesting")
-            CGRequestPostEventAccess()
+        
+        // Force the native macOS Accessibility system prompt dialog for new users
+        let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary
+        let axTrusted = AXIsProcessTrustedWithOptions(options)
+        if !axTrusted {
+            log("Accessibility not granted — system prompt triggered")
         }
+        
+        // Force the native macOS Input Monitoring system prompt dialog
         if !CGPreflightListenEventAccess() {
             log("Input Monitoring not granted — requesting")
             CGRequestListenEventAccess()

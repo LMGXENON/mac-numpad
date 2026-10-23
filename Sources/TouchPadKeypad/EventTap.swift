@@ -10,6 +10,7 @@ final class EventTapController {
 
     var onControlChanged: ((Bool) -> Void)?
     var onPrimaryClick: (() -> Void)?
+    var onPrimaryClickUp: (() -> Void)? // Notifies when the physical click or touch lifts up
 
     private(set) var isControlHeld = false
 
@@ -134,9 +135,10 @@ private let tapCallback: CGEventTapCallBack = { _, type, event, _ in
 
     if controller.shouldSwallow() {
         if type == .leftMouseDown {
-            // Logging is deliberately skipped on the hot path: per-click file I/O
-            // and CGEventSource queries were measurable parts of the click delay.
             controller.onPrimaryClick?()
+            controller.noteSwallowed()
+        } else if type == .leftMouseUp {
+            controller.onPrimaryClickUp?()
             controller.noteSwallowed()
         } else {
             controller.noteSwallowed()

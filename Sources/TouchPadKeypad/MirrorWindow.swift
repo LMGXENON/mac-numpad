@@ -138,9 +138,6 @@ struct PadMirrorView: View {
         }
     }
 
-    // Pill with fill like the reference: percent above, icon below, positioned
-    // absolutely in the mirror's coordinate space (ZStack centers by default, so
-    // every child gets an explicit .position).
     private func sliderStrip(region: PadLayout.Rect, symbol: String, level: Double?, active: Bool, in size: CGSize) -> some View {
         let rect = map(region, in: size)
         let fillFraction = min(1, level ?? 0)
@@ -156,7 +153,7 @@ struct PadMirrorView: View {
                 ZStack(alignment: .bottom) {
                     Capsule()
                         .fill(Color.white.opacity(0.13))
-                    if !unavailable {
+                    if !unavailable && fillFraction > 0.01 {
                         Capsule()
                             .fill(active ? Color.white.opacity(0.95) : Color.white.opacity(0.6))
                             .frame(height: tg.size.height * fillFraction)
@@ -186,8 +183,6 @@ struct PadMirrorView: View {
         let key = spec.key
         let isFlashed = state.flashedKey == key
         let underFinger = state.isControlHeld && state.keyUnderFinger == key
-        let isLast = state.lastKey == key && !isFlashed
-        let isTallOrWide = spec.colSpan > 1 || spec.rowSpan > 1
 
         return ZStack {
             RoundedRectangle(cornerRadius: 11)
@@ -197,14 +192,14 @@ struct PadMirrorView: View {
                     Color.white.opacity(0.16)
                 )
             Text(key.label)
-                .font(.system(size: isTallOrWide && spec.colSpan > 1 ? 15 : 16,
+                .font(.system(size: 16,
                               weight: .semibold,
                               design: .rounded))
                 .foregroundColor(isFlashed ? Color(white: 0.12) : .white.opacity(0.92))
         }
         .frame(width: rect.width, height: rect.height)
         .overlay {
-            if isLast {
+            if isFlashed || underFinger {
                 RoundedRectangle(cornerRadius: 11)
                     .strokeBorder(Color.white.opacity(0.85), lineWidth: 1.5)
             }

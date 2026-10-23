@@ -1,8 +1,7 @@
 #!/bin/bash
-# Builds TouchPad Keypad directly with swiftc (Swift 5 language mode) because the
-# installed Command Line Tools' SPM manifest library lacks language-mode settings,
-# then assembles a .app bundle so macOS shows a proper "TouchPad Keypad" entry in
-# System Settings → Privacy & Security.
+# Builds TouchPad Keypad directly with swiftc (Swift 5 language mode) and
+# signs it using Xcode's standard Apple Development certificate for stable
+# permissions across rebuilds.
 set -euo pipefail
 cd "$(dirname "$0")"
 
@@ -40,15 +39,16 @@ cat > "$APP/Contents/Info.plist" <<'PLIST'
 </plist>
 PLIST
 
-# Sign with the stable self-signed identity "TouchPad Keypad Dev" when present:
-# macOS TCC keys permissions on the code identity, so a stable identity keeps
-# Accessibility/Input Monitoring grants alive across rebuilds (ad-hoc "-" does not).
-IDENTITY="TouchPad Keypad Dev"
-if security find-identity -v -p codesigning 2>/dev/null | grep -q "$IDENTITY"; then
+# Automatically find Xcode's standard Apple Development certificate
+IDENTITY=$(security find-identity -v -p codesigning 2>/dev/null | grep -o "Apple Development:.*" | head -n 1 | cut -d'"' -f1 || true)
+
+if [ -n "$IDENTITY" ]; then
+    echo "Signing with Xcode identity: $IDENTITY"
     codesign --force --timestamp=none --sign "$IDENTITY" "$APP"
 else
-    codesign --force --sign - "$APP" >/dev/null 2>&1 || true
-    echo "(warning: stable identity unavailable — fell back to ad-hoc sign)"
+    echo "(Warning: No Apple Development certificate found — falling back to ad-hoc sign)"
+    codesign --force --sign - "$APP"
 fi
+
 echo "Built $APP"
 echo "Run it with: open $APP"
