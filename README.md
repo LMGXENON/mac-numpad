@@ -85,6 +85,18 @@ To generate the local code-signing identity required by `build.sh`, run the foll
 
 ---
 
+## Quick Reset & Build
+
+If macOS ever caches a stale permission state after updating the code, run these commands in your terminal:
+
+    pkill -9 TouchPadKeypad || true
+    tccutil reset Accessibility com.touchpadkeypad.mac
+    tccutil reset ListenEvent com.touchpadkeypad.mac
+    ./build.sh
+    open build/TouchPadKeypad.app
+
+---
+
 ## Limitations & Safety
 
 - **Private Frameworks:** Apple's private APIs may change across macOS versions; they are isolated inside dedicated adapter files[cite: 9].
